@@ -1,16 +1,13 @@
-import os
-from dataclasses import dataclass
-
-from dotenv import load_dotenv
-
-load_dotenv()
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-@dataclass(frozen=True)
-class Settings:
-    app_name: str = os.getenv("APP_NAME", "Arguing Agents Backend")
-    openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
-    default_model: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+class Settings(BaseSettings):
+    api_key: str
+    model_name: str = "google/gemma-4-26b-a4b-it:free"
+    base_url: str | None = "https://openrouter.ai/api/v1"
+    max_negotiation_rounds: int = 6
+
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 
 settings = Settings()
