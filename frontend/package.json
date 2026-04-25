@@ -10,7 +10,10 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@tanstack/vue-query": "^5.100.1",
+    "@wagmi/vue": "^0.5.5",
     "nuxt": "^4.4.2",
+    "viem": "2.x",
     "vue": "^3.5.32",
     "vue-router": "^5.0.4"
   }
