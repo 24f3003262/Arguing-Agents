@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 
-// Types matching Python backend
 interface NegotiationResult {
   round: number
   buyer_offer: number
@@ -67,7 +66,7 @@ const confidenceScore = computed(() => {
   return Math.min(85 + (rounds * 2), 99)
 })
 
-// Transcript from rounds
+
 const transcript = computed(() => {
   if (!negotiationData.value) return []
   return negotiationData.value.rounds.map((r, i) => ({
@@ -80,7 +79,7 @@ const transcript = computed(() => {
   }))
 })
 
-// Navigation
+
 const navItems = [
   { label: 'Marketplace', href: '#', active: false },
   { label: 'Negotiations', href: '#', active: true },
@@ -152,7 +151,7 @@ function resetNegotiation() {
   <div class="min-h-screen flex flex-col overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container">
     <!-- TopNavBar -->
     <header class="flex justify-between items-center w-full px-8 py-4 sticky top-0 z-50 bg-neutral-950/90 backdrop-blur-md docked full-width border-b border-cyan-500/20 shadow-[0_4px_20px_rgba(0,255,255,0.05)] relative after:content-[''] after:absolute after:inset-0 after:bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] after:bg-[length:100%_2px,3px_100%] after:pointer-events-none">
-      <div class="text-xl font-bold text-cyan-400 tracking-tighter italic z-10 font-['Space_Grotesk']">NEGO_OS</div>
+      <div class="text-xl font-bold text-cyan-400 tracking-tighter italic z-10 font-['Space_Grotesk']">Arguing Agents?</div>
       <nav class="hidden md:flex gap-8 z-10">
         <a 
           v-for="item in navItems" 
@@ -265,7 +264,7 @@ function resetNegotiation() {
               <button 
                 type="submit" 
                 :disabled="isLoading"
-                class="bg-primary-container text-on-primary-container font-label-caps text-label-caps py-md px-lg rounded-DEFAULT uppercase tracking-widest border border-transparent hover:bg-transparent hover:text-primary-container hover:border-primary-container transition-all duration-300 flex items-center justify-center gap-sm disabled:opacity-50"
+                class="bg-primary-container text-on-primary-container font-label-caps text-label-caps py-md px-lg rounded-DEFAULT chromatic-border-hover uppercase tracking-widest border border-transparent hover:bg-transparent hover:text-primary-container hover:border-primary-container transition-all duration-300 flex items-center justify-center gap-sm disabled:opacity-50"
               >
                 <span v-if="isLoading" class="material-symbols-outlined text-[16px] animate-spin">sync</span>
                 <span v-else class="material-symbols-outlined text-[16px]">play_arrow</span>
@@ -402,11 +401,54 @@ function resetNegotiation() {
   pointer-events: none;
   z-index: 0;
 }
-.chromatic-hover:hover {
-  text-shadow: 2px 0 0 #fe00fe, -2px 0 0 #00fbfb;
-  transform: translateX(1px);
+.chromatic-hover {
+  transition: all 0.1s ease;
 }
+
+.chromatic-hover:hover {
+  /* Red offset left, Cyan offset right */
+  text-shadow: 
+    -2px 0 0 rgba(255, 0, 255, 0.7), 
+     2px 0 0 rgba(0, 251, 251, 0.7);
+  transform: scale(1.02);
+}
+
+.chromatic-hover:active {
+  /* Intense jitter on click */
+  text-shadow: 
+    -4px 1px 0 rgba(255, 0, 255, 0.9), 
+     4px -1px 0 rgba(0, 251, 251, 0.9);
+  transform: translate(-1px, 1px);
+}
+
+/* Border/Box Chromatic Aberration */
+.chromatic-border-hover {
+  transition: all 0.2s ease;
+  position: relative;
+}
+
 .chromatic-border-hover:hover {
-  box-shadow: 2px 0 0 #fe00fe, -2px 0 0 #00fbfb;
+  box-shadow: 
+    -3px 0 0 #fe00fe, 
+     3px 0 0 #00fbfb;
+}
+
+.chromatic-border-hover:active {
+  box-shadow: 
+    -5px 2px 0 #fe00fe, 
+     5px -2px 0 #00fbfb;
+  transform: translateY(1px);
+}
+
+/* Optional: Glitch Animation for a "Live" feel */
+@keyframes glitch-skew {
+  0% { transform: skew(0deg); }
+  20% { transform: skew(-1deg); }
+  40% { transform: skew(1deg); }
+  100% { transform: skew(0deg); }
+}
+
+.chromatic-border-hover:hover {
+  animation: glitch-skew 0.3s infinite linear alternate-reverse;
 }
 </style>
