@@ -184,7 +184,7 @@ function resetNegotiation() {
             v-for="item in sideNavItems" 
             :key="item.label"
             :href="item.href"
-            class="font-['Space_Grotesk'] text-xs font-medium flex items-center gap-3 px-4 py-3 hover:bg-neutral-900 hover:text-cyan-200 transition-all"
+            class="font-['Space_Grotesk'] text-xs font-medium flex items-center chromatic-hover gap-3 px-4 py-3 hover:bg-neutral-900 hover:text-cyan-200 transition-all"
             :class="item.active 
               ? 'bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400' 
               : 'text-neutral-600'"
@@ -305,7 +305,7 @@ function resetNegotiation() {
                 <p class="font-code-sm text-code-sm text-outline mt-sm">Status: {{ negotiationData.status }}</p>
               </div>
               <div class="flex gap-md mt-auto pt-lg border-t border-surface-variant">
-                <button class="flex-1 bg-primary-container text-on-primary-container font-label-caps text-label-caps py-md px-lg rounded-DEFAULT uppercase tracking-widest border border-transparent hover:bg-transparent hover:text-primary-container hover:border-primary-container transition-all duration-300 chromatic-border-hover flex items-center justify-center gap-sm">
+                <button class="flex-1 bg-primary-container text-on-primary-container chromatic-border-hover font-label-caps text-label-caps py-md px-lg rounded-DEFAULT uppercase tracking-widest border border-transparent hover:bg-transparent hover:text-primary-container hover:border-primary-container transition-all duration-300 chromatic-border-hover flex items-center justify-center gap-sm">
                   <span class="material-symbols-outlined text-[16px]">draw</span>
                   Finalize Contract
                 </button>
