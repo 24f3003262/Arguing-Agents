@@ -157,7 +157,7 @@ function resetNegotiation() {
           v-for="item in navItems" 
           :key="item.label"
           :href="item.href"
-          class="font-['Space_Grotesk'] uppercase tracking-widest text-sm transition-all duration-300 hover:shadow-[0_0_8px_#00FFFF]"
+          class="font-['Space_Grotesk'] uppercase chromatic-hover tracking-widest text-sm transition-all duration-300 hover:shadow-[0_0_8px_#00FFFF]"
           :class="item.active 
             ? 'text-cyan-400 border-b border-cyan-400 pb-1 hover:text-cyan-300' 
             : 'text-neutral-500 hover:text-neutral-300'"
@@ -166,7 +166,7 @@ function resetNegotiation() {
         </a>
       </nav>
       <div class="z-10 hidden md:block">
-        <button class="font-['Space_Grotesk'] uppercase tracking-widest text-sm text-cyan-400 border border-cyan-400 px-4 py-2 hover:bg-cyan-400/10 transition-colors">
+        <button class="font-['Space_Grotesk'] uppercase chromatic-border-hover tracking-widest text-sm text-cyan-400 border border-cyan-400 px-4 py-2 hover:bg-cyan-400/10 transition-colors">
           Connect Wallet
         </button>
       </div>
@@ -196,7 +196,7 @@ function resetNegotiation() {
       </aside>
 
       <!-- Main Canvas -->
-      <main class="flex-1 md:ml-64 p-gutter lg:p-margin relative scanline-bg bg-surface-dim min-h-full">
+      <main :class="{ 'animate-pulse opacity-90': isLoading }" class="flex-1 md:ml-64 p-gutter lg:p-margin relative scanline-bg bg-surface-dim min-h-full">
         
         <!-- Negotiation Form (when no data) -->
         <div v-if="!negotiationData" class="max-w-2xl mx-auto pt-lg">
@@ -396,10 +396,13 @@ function resetNegotiation() {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(transparent 50%, rgba(0, 251, 251, 0.03) 50%);
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%, 
+    rgba(0, 255, 255, 0.05) 50%
+  );
   background-size: 100% 4px;
   pointer-events: none;
-  z-index: 0;
+  z-index: 1;
 }
 .chromatic-hover {
   transition: all 0.1s ease;
@@ -423,16 +426,18 @@ function resetNegotiation() {
 
 /* Border/Box Chromatic Aberration */
 .chromatic-border-hover {
-  transition: all 0.2s ease;
   position: relative;
+  transition: all 0.2s ease;
+  overflow: hidden;
 }
 
 .chromatic-border-hover:hover {
+  border-color: transparent;
   box-shadow: 
-    -3px 0 0 #fe00fe, 
-     3px 0 0 #00fbfb;
+    -2px 0 0 #fe00fe, 
+     2px 0 0 #00fbfb;
+  text-shadow: -1px 0 #fe00fe, 1px 0 #00fbfb;
 }
-
 .chromatic-border-hover:active {
   box-shadow: 
     -5px 2px 0 #fe00fe, 
@@ -450,5 +455,15 @@ function resetNegotiation() {
 
 .chromatic-border-hover:hover {
   animation: glitch-skew 0.3s infinite linear alternate-reverse;
+}
+
+@keyframes flicker {
+  0% { opacity: 0.98; }
+  5% { opacity: 0.95; }
+  10% { opacity: 0.99; }
+  100% { opacity: 1; }
+}
+.scanline-bg {
+  animation: flicker 0.5s infinite;
 }
 </style>
