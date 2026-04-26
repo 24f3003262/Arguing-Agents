@@ -1,3 +1,15 @@
+<script setup lang="ts">
+const navItems = [
+  { label: 'Marketplace', to: '/marketplace' },
+  { label: 'Negotiations', to: '/negotiation' },
+  { label: 'Dashboard', to: '/' }
+]
+
+const navBaseClass = "font-['Space_Grotesk'] uppercase tracking-widest text-sm transition-all duration-300 hover:text-cyan-300 hover:shadow-[0_0_8px_#00FFFF]"
+const navActiveClass = 'text-cyan-400 border-b border-cyan-400 pb-1 hover:text-cyan-300'
+const navInactiveClass = 'text-neutral-500 hover:text-neutral-300'
+</script>
+
 <template>
   <div class="min-h-screen flex flex-col bg-background text-on-surface font-body-md antialiased">
     <!-- TopNavBar -->
@@ -6,19 +18,19 @@
         <div class="text-xl font-bold text-cyan-400 tracking-tighter italic font-['Space_Grotesk'] uppercase tracking-widest text-sm">
           NEGO_OS
         </div>
-        <div class="hidden md:flex items-center gap-8">
-          <a class="font-['Space_Grotesk'] uppercase tracking-widest text-sm text-cyan-400 border-b border-cyan-400 pb-1" href="#">Marketplace</a>
-          <a class="font-['Space_Grotesk'] uppercase tracking-widest text-sm text-neutral-500 hover:text-neutral-300 transition-colors hover:text-cyan-300 hover:shadow-[0_0_8px_#00FFFF] transition-all duration-300" href="#">Negotiations</a>
-          <a class="font-['Space_Grotesk'] uppercase tracking-widest text-sm text-neutral-500 hover:text-neutral-300 transition-colors hover:text-cyan-300 hover:shadow-[0_0_8px_#00FFFF] transition-all duration-300" href="#">Dashboard</a>
-        </div>
+        <AppNavLinks
+          :items="navItems"
+          container-class="hidden md:flex items-center gap-8"
+          :base-class="navBaseClass"
+          :active-class="navActiveClass"
+          :inactive-class="navInactiveClass"
+        />
       </div>
       <div class="flex items-center gap-6 z-10 relative">
         <button class="text-neutral-500 hover:text-cyan-300 transition-colors">
           <span class="material-symbols-outlined">search</span>
         </button>
-        <button class="border border-cyan-400/50 bg-cyan-950/30 text-cyan-400 font-label-caps px-4 py-2 hover:bg-cyan-900/50 hover:border-cyan-400 transition-all shadow-[0_0_10px_rgba(0,255,255,0.1)] hover:shadow-[0_0_15px_rgba(0,255,255,0.3)] uppercase">
-          Connect Wallet
-        </button>
+        <AppConnectWalletButton />
       </div>
     </nav>
     <div class="flex flex-1 relative overflow-hidden">
@@ -73,7 +85,7 @@
             </div>
             <div class="mt-auto flex items-center justify-between pt-md border-t border-surface-variant">
               <div class="font-h2 text-tertiary">2.5 <span class="font-body-md text-outline">ETH</span></div>
-              <button class="bg-primary-container text-on-primary-fixed font-label-caps px-md py-sm border border-transparent group-hover:bg-primary-fixed group-hover:shadow-[0_0_10px_rgba(0,251,251,0.5)] transition-all">Negotiate</button>
+              <MarketplaceNegotiateLink variant="primary" />
             </div>
           </article>
           <!-- Card 2: Logistics Arrays -->
@@ -100,7 +112,7 @@
             </div>
             <div class="mt-auto flex items-center justify-between pt-md border-t border-surface-variant">
               <div class="font-h2 text-tertiary">1,200 <span class="font-body-md text-outline">USDC</span></div>
-              <button class="bg-surface-dim text-primary-container font-label-caps px-md py-sm border border-primary-container hover:bg-primary-container hover:text-on-primary-container transition-all cyber-hover-effect">Negotiate</button>
+              <MarketplaceNegotiateLink />
             </div>
           </article>
           <!-- Card 3: Compute Cycles -->
@@ -126,7 +138,7 @@
             </div>
             <div class="mt-auto flex items-center justify-between pt-md border-t border-surface-variant">
               <div class="font-h2 text-tertiary">0.05 <span class="font-body-md text-outline">ETH/hr</span></div>
-              <button class="bg-surface-dim text-primary-container font-label-caps px-md py-sm border border-primary-container hover:bg-primary-container hover:text-on-primary-container transition-all cyber-hover-effect">Negotiate</button>
+              <MarketplaceNegotiateLink />
             </div>
           </article>
         </div>
