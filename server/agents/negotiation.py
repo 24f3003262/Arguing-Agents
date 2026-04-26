@@ -6,14 +6,9 @@ History is kept as a list of turns and also fed back into context
 as a readable string so agents remember what was said.
 """
 
-from server.agents.base import Agent
-from server.services.llm import call_llm
-from server.schemas.negotiation import (
-    AgentTurn,
-    NegotiationRequest,
-    NegotiationResponse,
-    NegotiationRound,
-)
+from agents.base import Agent
+from services.llm import call_llm
+from schemas.negotiation import AgentTurn, NegotiationRequest, NegotiationResponse, NegotiationRound
 
 MAX_ROUNDS = 5
 
@@ -26,26 +21,16 @@ def _build_context(item: str, starting_price: float, history: list[dict]) -> str
     lines = [f"Item: {item}", f"Starting price: {starting_price}"]
 
     for turn in history:
-        lines.append(
-            f"{turn['role'].capitalize()}: \"{turn['message']}\" (offered {turn['offer_price']})"
-        )
+        lines.append(f'{turn["role"].capitalize()}: "{turn["message"]}" (offered {turn["offer_price"]})')
 
     return "\n".join(lines)
 
 
 async def run_negotiation(req: NegotiationRequest) -> NegotiationResponse:
-    buyer = Agent(
-        role="buyer",
-        personality=req.buyer_personality,
-        max_price=req.buyer_max_price,
-    )
-    seller = Agent(
-        role="seller",
-        personality=req.seller_personality,
-        min_price=req.seller_min_price,
-    )
+    buyer = Agent(role="buyer", personality=req.buyer_personality, max_price=req.buyer_max_price)
+    seller = Agent(role="seller", personality=req.seller_personality, min_price=req.seller_min_price)
 
-    history: list[dict] = []   # flat list of every turn: {role, message, offer_price, status}
+    history: list[dict] = []  # flat list of every turn: {role, message, offer_price, status}
     rounds: list[NegotiationRound] = []
 
     for round_number in range(1, MAX_ROUNDS + 1):
@@ -57,11 +42,7 @@ async def run_negotiation(req: NegotiationRequest) -> NegotiationResponse:
         history.append({"role": "buyer", **buyer_raw})
 
         if buyer_agent_turn.status in ("accept", "cancel"):
-            rounds.append(NegotiationRound(
-                round_number=round_number,
-                buyer=buyer_agent_turn,
-                seller=None,
-            ))
+            rounds.append(NegotiationRound(round_number=round_number, buyer=buyer_agent_turn, seller=None))
             if buyer_agent_turn.status == "accept":
                 return NegotiationResponse(
                     status="agreed",
@@ -80,11 +61,7 @@ async def run_negotiation(req: NegotiationRequest) -> NegotiationResponse:
         seller_agent_turn = AgentTurn(**seller_raw)
         history.append({"role": "seller", **seller_raw})
 
-        rounds.append(NegotiationRound(
-            round_number=round_number,
-            buyer=buyer_agent_turn,
-            seller=seller_agent_turn,
-        ))
+        rounds.append(NegotiationRound(round_number=round_number, buyer=buyer_agent_turn, seller=seller_agent_turn))
 
         if seller_agent_turn.status == "accept":
             return NegotiationResponse(
@@ -101,10 +78,6 @@ async def run_negotiation(req: NegotiationRequest) -> NegotiationResponse:
 
     # Ran out of rounds or someone cancelled
     return NegotiationResponse(
-        status="cancelled",
-        item=req.item,
-        agreed_price=None,
-        total_rounds=len(rounds),
-        rounds=rounds,
-        history=history,
+        status="cancelled", item=req.item, agreed_price=None, total_rounds=len(rounds), rounds=rounds, history=history
     )
+
