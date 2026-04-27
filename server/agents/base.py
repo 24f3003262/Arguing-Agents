@@ -100,5 +100,8 @@ Negotiation so far:
     async def respond(self, context: str, call_llm) -> dict:
         user_prompt = self.build_user_prompt(context)
         system_prompt = self.build_system_prompt()
+        print(f"[agent][{self.role}] system prompt:\n{system_prompt}")
+        print(f"[agent][{self.role}] user prompt:\n{user_prompt}")
         raw = await call_llm(user_prompt, system_prompt)
+        print(f"[agent][{self.role}] raw response: {raw}")
         return json.loads(raw)

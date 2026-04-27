@@ -43,9 +43,11 @@ async def run_negotiation(req: NegotiationRequest) -> NegotiationResponse:
 
     for round_number in range(1, MAX_ROUNDS + 1):
         context = _build_context(req.item, req.starting_price, history)
+        print(f"[negotiation][round {round_number}] context before buyer turn:\n{context}")
 
         # ── Buyer's turn ──────────────────────────────────────────────── #
         buyer_raw = await buyer.respond(context, call_llm)
+        print(f"[negotiation][round {round_number}][buyer] received: {buyer_raw}")
         buyer_agent_turn = AgentTurn(**buyer_raw)
         history.append({"role": "buyer", **buyer_raw})
 
@@ -64,8 +66,10 @@ async def run_negotiation(req: NegotiationRequest) -> NegotiationResponse:
 
         # ── Seller's turn ─────────────────────────────────────────────── #
         context = _build_context(req.item, req.starting_price, history)
+        print(f"[negotiation][round {round_number}] context before seller turn:\n{context}")
 
         seller_raw = await seller.respond(context, call_llm)
+        print(f"[negotiation][round {round_number}][seller] received: {seller_raw}")
         seller_agent_turn = AgentTurn(**seller_raw)
         history.append({"role": "seller", **seller_raw})
 
