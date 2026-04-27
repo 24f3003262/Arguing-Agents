@@ -20,8 +20,16 @@ def _build_context(item: str, starting_price: float, history: list[dict]) -> str
     """
     lines = [f"Item: {item}", f"Starting price: {starting_price}"]
 
+    if history:
+        last_turn = history[-1]
+        lines.append(
+            "Last offer: "
+            f"{last_turn['role']} offered {last_turn['offer_price']} "
+            f"with status {last_turn['status']}"
+        )
+
     for turn in history:
-        lines.append(f'{turn["role"].capitalize()}: "{turn["message"]}" (offered {turn["offer_price"]})')
+        lines.append(f'{turn["role"].capitalize()}: "{turn["message"]}" (offered {turn["offer_price"]}, status: {turn["status"]})')
 
     return "\n".join(lines)
 
