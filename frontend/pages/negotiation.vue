@@ -145,7 +145,7 @@ function resetNegotiation() {
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container">
+  <!-- <div class="min-h-screen flex flex-col overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container">
     <header class="flex justify-between items-center w-full px-8 py-4 sticky top-0 z-50 bg-neutral-950/90 backdrop-blur-md docked full-width border-b border-cyan-500/20 shadow-[0_4px_20px_rgba(0,255,255,0.05)] relative after:content-[''] after:absolute after:inset-0 after:bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] after:bg-[length:100%_2px,3px_100%] after:pointer-events-none">
       <div class="text-xl font-bold text-cyan-400 tracking-tighter italic z-10 font-['Space_Grotesk']">Arguing Agents?</div>
       <AppNavLinks
@@ -158,10 +158,10 @@ function resetNegotiation() {
       <div class="z-10 hidden md:block">
         <AppConnectWalletButton variant="negotiation" />
       </div>
-    </header>
+    </header> -->
 
     <div class="flex flex-1 relative w-full">
-      <aside class="fixed left-0 top-[73px] bottom-0 flex flex-col pt-6 bg-neutral-950 h-full w-64 border-r border-cyan-900/30 hidden md:flex before:content-[''] before:absolute before:inset-0 before:bg-[linear-gradient(rgba(18,19,21,0)_50%,rgba(0,255,255,0.02)_50%)] before:bg-[length:100%_4px] z-40">
+      <!-- <aside class="fixed left-0 top-[73px] bottom-0 flex flex-col pt-6 bg-neutral-950 h-full w-64 border-r border-cyan-900/30 hidden md:flex before:content-[''] before:absolute before:inset-0 before:bg-[linear-gradient(rgba(18,19,21,0)_50%,rgba(0,255,255,0.02)_50%)] before:bg-[length:100%_4px] z-40">
         <div class="px-6 mb-8 relative z-10">
           <h2 class="text-cyan-500 font-black font-['Space_Grotesk'] text-lg tracking-widest">SYSTEM_CTRL</h2>
           <p class="font-['Space_Grotesk'] text-xs font-medium text-neutral-500 mt-1">V.2.0.4-STABLE</p>
@@ -180,9 +180,9 @@ function resetNegotiation() {
             {{ item.label }}
           </a>
         </nav>
-      </aside>
+      </aside> -->
 
-      <main :class="{ 'animate-pulse opacity-90': isLoading }" class="flex-1 md:ml-64 p-gutter lg:p-margin relative scanline-bg bg-surface-dim min-h-full">
+      <!-- <main :class="{ 'animate-pulse opacity-90': isLoading }" class="flex-1 md:ml-64 p-gutter lg:p-margin relative scanline-bg bg-surface-dim min-h-full"> -->
         <div v-if="!negotiationData" class="max-w-2xl mx-auto pt-lg">
           <div class="bg-surface-container border border-outline-variant p-lg">
             <h2 class="font-h2 text-h2 text-on-surface mb-lg">Start New Negotiation</h2>
@@ -361,9 +361,8 @@ function resetNegotiation() {
             </div>
           </div>
         </div>
-      </main>
+      <!-- </main> -->
     </div>
-  </div>
 </template>
 
 <style scoped>
