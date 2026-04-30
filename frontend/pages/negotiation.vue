@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-
+import { ARGUING_ABI } from '~/constants/abi'
+import { useAccount, useWriteContract } from '@wagmi/vue'
+import { parseEther } from 'viem'
 interface NegotiationResult {
   round: number
   buyer_offer: number
@@ -21,10 +23,14 @@ interface NegotiationRequest {
   max_price: number
   personality: string
 }
-
+const { address, isConnected } = useAccount()
+const { writeContract, data: hash, isPending, error: contractError } = useWriteContract()
 const isLoading = ref(false)
-const error = ref('')
 const negotiationData = ref<NegotiationResponse | null>(null)
+const config = useRuntimeConfig()
+const contractAddress = config.public.contractAddress
+
+
 
 const form = ref<NegotiationRequest>({
   item: '',
@@ -102,7 +108,7 @@ async function startNegotiation() {
   error.value = ''
 
   try {
-    const response = await fetch('http://localhost:8000/start-negotiation', {
+    const response = await fetch('http://localhost:8000/negotiate', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -131,7 +137,24 @@ async function startNegotiation() {
     isLoading.value = false
   }
 }
+async function finalizeOnChain() {
+  if (!negotiationData.value?.agreed_price || !isConnected.value) {
+    console.error("Negotiation not complete or wallet not connected")
+    return
+  }
 
+  writeContract({
+    address: contractAddress as `0x${string}`,
+    abi: ARGUING_ABI,
+    functionName: 'createDeal',
+    args: [
+      address.value!, // The user's wallet address (Buyer)
+      '0x3F00000000000000000000000000000000000000', // Agent's address (Placeholder)
+      parseEther(negotiationData.value.agreed_price.toString()), // ETH -> Wei
+      negotiationData.value.item
+    ]
+  })
+}
 function resetNegotiation() {
   negotiationData.value = null
   form.value = {
@@ -285,9 +308,12 @@ function resetNegotiation() {
                 <p class="font-code-sm text-code-sm text-outline mt-sm">Status: {{ negotiationData.status }}</p>
               </div>
               <div class="flex gap-md mt-auto pt-lg border-t border-surface-variant">
-                <button class="flex-1 bg-primary-container text-on-primary-container chromatic-border-hover font-label-caps text-label-caps py-md px-lg rounded-DEFAULT uppercase tracking-widest border border-transparent hover:bg-transparent hover:text-primary-container hover:border-primary-container transition-all duration-300 chromatic-border-hover flex items-center justify-center gap-sm">
-                  <span class="material-symbols-outlined text-[16px]">draw</span>
-                  Finalize Contract
+                <button @click="finalizeOnChain"
+                  :disabled="isPending || !hasAgreement"
+                  class="flex-1 bg-primary-container text-on-primary-container chromatic-border-hover font-label-caps text-label-caps py-md px-lg rounded-DEFAULT uppercase tracking-widest border border-transparent hover:bg-transparent hover:text-primary-container hover:border-primary-container transition-all duration-300 chromatic-border-hover flex items-center justify-center gap-sm">
+                  <span v-if="isPending" class="material-symbols-outlined text-[16px] animate-spin">sync</span>
+                  <span v-else class="material-symbols-outlined text-[16px]">draw</span>
+                  {{ isPending ? 'Processing...' : 'Finalize Contract' }}
                 </button>
                 <button @click="resetNegotiation" class="flex-1 bg-surface-container text-on-surface font-label-caps text-label-caps py-md px-lg rounded-DEFAULT uppercase tracking-widest border border-outline-variant hover:border-secondary-container hover:text-secondary-container transition-all duration-300 chromatic-hover flex items-center justify-center gap-sm">
                   <span class="material-symbols-outlined text-[16px]">restart_alt</span>

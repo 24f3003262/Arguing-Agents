@@ -20,6 +20,9 @@
       <div class="z-10 hidden md:block">
         <AppConnectWalletButton variant="negotiation" />
       </div>
+      <div v-if="hash" class="mt-sm font-code-sm text-cyan-400">
+        Transaction Hash: {{ hash.slice(0, 10) }}...
+      </div>
     </header>
 
     <div class="flex flex-1 relative w-full">
