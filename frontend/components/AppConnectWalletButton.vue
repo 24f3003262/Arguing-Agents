@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useAccount, useConnect, useDisconnect } from '@wagmi/vue'
+import { useConfig,useAccount, useConnect, useDisconnect } from '@wagmi/vue'
+
+
 
 const props = withDefaults(defineProps<{
   variant?: 'marketplace' | 'negotiation'
@@ -12,6 +14,7 @@ const props = withDefaults(defineProps<{
 const isMounted = ref(false)
 onMounted(() => isMounted.value = true)
 
+const config=useConfig()
 const { address, isConnected, isConnecting } = useAccount()
 const { connect, connectors } = useConnect()
 const { disconnect } = useDisconnect()
@@ -33,6 +36,14 @@ const buttonClass = computed(() => {
 function handleClick() {
   console.log("Button clicked!");
   
+  const availableConnectors = config.connectors
+  console.log("Connectors from config:", availableConnectors)
+
+  if (!availableConnectors || availableConnectors.length === 0) {
+     console.error("Wagmi Error: No connectors detected.")
+     return
+  }
+
   if (isConnected.value) {
     console.log("Disconnecting...");
     disconnect();
@@ -41,7 +52,7 @@ function handleClick() {
 
   console.log("Available Connectors:", connectors.value);
 
-  const connector = connectors?.value?.[0];
+  const connector = availableConnectors.find(c => c.id === 'injected') || availableConnectors[0];
   if (!connector) {
     console.error("Wagmi Error: No connectors found. Check your plugins/wagmi.ts or extension.");
     alert("Wallet extension not detected. Please ensure MetaMask is installed and refresh.");
