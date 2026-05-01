@@ -50,3 +50,37 @@ async def sample_run() -> NegotiationResponse:
 @app.get("/health")
 async def health() -> dict:
     return {"status": "ok"}
+
+
+# A simple list to act as  database for now
+market_items = [
+    {
+        "id": 1, 
+        "item": "Bored Ape #4211", 
+        "starting_price": 0.5, 
+        "seller_min_price": 0.4, # Add this for the AI
+        "seller_wallet": "0x...",
+        "status": "available"
+    },
+]
+@app.post("/items")
+async def create_item(item: dict):
+    # Assign a basic ID and save
+    item["id"] = len(market_items) + 1
+    item["status"] = "available"
+    market_items.append(item)
+    return {"status": "success", "item": item}
+
+@app.get("/items")
+async def get_items():
+    return market_items
+
+
+
+@app.get("/items/{item_id}")
+async def get_item(item_id: int):
+    # Search the list for the item with the matching ID
+    item = next((i for i in market_items if i["id"] == item_id), None)
+    if item:
+        return item
+    return {"error": "Item not found"}, 404
