@@ -2,9 +2,11 @@
 __pycache__/
 *.pyc
 PROJECT_PLAN.md
-<<<<<<< Updated upstream
 
 /server/.venv
-=======
 *.env
->>>>>>> Stashed changes
+.gitnexus
+.agents/
+.claude/
+.kilo/
+AGENTS.md

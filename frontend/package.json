@@ -12,6 +12,7 @@
   "dependencies": {
     "@tanstack/vue-query": "^5.100.6",
     "@wagmi/vue": "^0.5.9",
+    "axios": "^1.15.2",
     "nuxt": "^4.4.2",
     "viem": "2.x",
     "vue": "^3.5.32",

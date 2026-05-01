@@ -3,30 +3,44 @@ import { ref, computed } from 'vue'
 import { ARGUING_ABI } from '~/constants/abi'
 import { useAccount, useWriteContract } from '@wagmi/vue'
 import { parseEther } from 'viem'
-interface NegotiationResult {
-  round: number
-  buyer_offer: number
-  seller_offer: number
+interface AgentTurn {
+  message: string
+  offer_price: number
+  status: 'counter' | 'accept' | 'cancel'
+}
+
+interface NegotiationRound {
+  round_number: number
+  buyer: AgentTurn
+  seller: AgentTurn | null
+}
+
+interface NegotiationHistoryEntry extends AgentTurn {
+  role: 'buyer' | 'seller'
 }
 
 interface NegotiationResponse {
   status: string
   item: string
   agreed_price: number | null
-  rounds: NegotiationResult[]
+  total_rounds: number
+  rounds: NegotiationRound[]
+  history: NegotiationHistoryEntry[]
 }
 
 interface NegotiationRequest {
   item: string
-  start_price: number
-  min_price: number
-  max_price: number
-  personality: string
+  starting_price: number
+  buyer_max_price: number
+  seller_min_price: number
+  buyer_personality: 'balanced' | 'aggressive' | 'conservative'
+  seller_personality: 'balanced' | 'aggressive' | 'conservative'
 }
 const { address, isConnected } = useAccount()
 const { writeContract, data: hash, isPending, error: contractError } = useWriteContract()
 const isLoading = ref(false)
 const negotiationData = ref<NegotiationResponse | null>(null)
+const error = ref('')
 const config = useRuntimeConfig()
 const contractAddress = config.public.contractAddress
 
@@ -34,10 +48,11 @@ const contractAddress = config.public.contractAddress
 
 const form = ref<NegotiationRequest>({
   item: '',
-  start_price: 0,
-  min_price: 0,
-  max_price: 0,
-  personality: 'balanced'
+  starting_price: 0,
+  buyer_max_price: 0,
+  seller_min_price: 0,
+  buyer_personality: 'balanced',
+  seller_personality: 'balanced'
 })
 
 const hasAgreement = computed(() => negotiationData.value?.status === 'agreed')
@@ -71,13 +86,11 @@ const confidenceScore = computed(() => {
 
 const transcript = computed(() => {
   if (!negotiationData.value) return []
-  return negotiationData.value.rounds.map((r, i) => ({
-    time: `14:0${i + 1}:${Math.floor(Math.random() * 60).toString().padStart(2, '0')}`,
-    sender: i % 2 === 0 ? 'LOCAL_NODE' : 'AGENT_0x3F',
-    message: i % 2 === 0
-      ? `SUBMIT_BID (Amount: ${r.buyer_offer.toFixed(2)} ETH)`
-      : `COUNTER_OFFER (Amount: ${r.seller_offer.toFixed(2)} ETH)`,
-    type: i === negotiationData.value!.rounds.length - 1 ? 'accept' : 'info'
+  return negotiationData.value.history.map((entry, index) => ({
+    time: `14:${String(index + 1).padStart(2, '0')}:${Math.floor(Math.random() * 60).toString().padStart(2, '0')}`,
+    sender: entry.role === 'buyer' ? 'LOCAL_NODE' : 'AGENT_0x3F',
+    message: `${entry.message} (Amount: ${entry.offer_price.toFixed(2)} ETH)`,
+    type: entry.status === 'accept' ? 'accept' : 'info'
   }))
 })
 
@@ -99,7 +112,12 @@ const sideNavItems = [
 ]
 
 async function startNegotiation() {
-  if (!form.value.item || form.value.start_price <= 0 || form.value.min_price <= 0 || form.value.max_price <= 0) {
+  if (
+    !form.value.item ||
+    form.value.starting_price <= 0 ||
+    form.value.buyer_max_price <= 0 ||
+    form.value.seller_min_price <= 0
+  ) {
     error.value = 'Please fill in all fields'
     return
   }
@@ -108,7 +126,7 @@ async function startNegotiation() {
   error.value = ''
 
   try {
-    const response = await fetch('http://localhost:8000/negotiate', {
+    const response = await fetch('http://localhost:3001/negotiate', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -123,16 +141,7 @@ async function startNegotiation() {
     negotiationData.value = await response.json()
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'An error occurred'
-    negotiationData.value = {
-      status: 'agreed',
-      item: form.value.item,
-      agreed_price: (form.value.start_price + form.value.min_price) / 2,
-      rounds: [
-        { round: 1, buyer_offer: form.value.min_price, seller_offer: form.value.start_price },
-        { round: 2, buyer_offer: form.value.min_price * 1.2, seller_offer: form.value.start_price * 0.9 },
-        { round: 3, buyer_offer: form.value.min_price * 1.5, seller_offer: form.value.start_price * 0.8 }
-      ]
-    }
+    negotiationData.value = null
   } finally {
     isLoading.value = false
   }
@@ -159,10 +168,11 @@ function resetNegotiation() {
   negotiationData.value = null
   form.value = {
     item: '',
-    start_price: 0,
-    min_price: 0,
-    max_price: 0,
-    personality: 'balanced'
+    starting_price: 0,
+    buyer_max_price: 0,
+    seller_min_price: 0,
+    buyer_personality: 'balanced',
+    seller_personality: 'balanced'
   }
 }
 </script>
@@ -225,46 +235,58 @@ function resetNegotiation() {
                 <div>
                   <label class="font-label-caps text-label-caps text-on-surface-variant block mb-sm">START PRICE</label>
                   <input
-                    v-model.number="form.start_price"
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
+                  v-model.number="form.starting_price"
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00"
                     class="w-full bg-surface-container-low border border-outline-variant text-on-surface px-md py-sm rounded-DEFAULT focus:border-primary-container focus:outline-none"
                   />
                 </div>
                 <div>
                   <label class="font-label-caps text-label-caps text-on-surface-variant block mb-sm">MIN PRICE</label>
                   <input
-                    v-model.number="form.min_price"
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
+                  v-model.number="form.seller_min_price"
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00"
                     class="w-full bg-surface-container-low border border-outline-variant text-on-surface px-md py-sm rounded-DEFAULT focus:border-primary-container focus:outline-none"
                   />
                 </div>
                 <div>
                   <label class="font-label-caps text-label-caps text-on-surface-variant block mb-sm">MAX PRICE</label>
                   <input
-                    v-model.number="form.max_price"
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    class="w-full bg-surface-container-low border border-outline-variant text-on-surface px-md py-sm rounded-DEFAULT focus:border-primary-container focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label class="font-label-caps text-label-caps text-on-surface-variant block mb-sm">PERSONALITY</label>
-                <select
-                  v-model="form.personality"
+                  v-model.number="form.buyer_max_price"
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00"
                   class="w-full bg-surface-container-low border border-outline-variant text-on-surface px-md py-sm rounded-DEFAULT focus:border-primary-container focus:outline-none"
-                >
-                  <option value="balanced">Balanced</option>
-                  <option value="aggressive">Aggressive</option>
-                  <option value="conservative">Conservative</option>
-                </select>
+                />
               </div>
+            </div>
+
+            <div>
+              <label class="font-label-caps text-label-caps text-on-surface-variant block mb-sm">BUYER PERSONALITY</label>
+              <select
+                v-model="form.buyer_personality"
+                class="w-full bg-surface-container-low border border-outline-variant text-on-surface px-md py-sm rounded-DEFAULT focus:border-primary-container focus:outline-none"
+              >
+                <option value="balanced">Balanced</option>
+                <option value="aggressive">Aggressive</option>
+                <option value="conservative">Conservative</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="font-label-caps text-label-caps text-on-surface-variant block mb-sm">SELLER PERSONALITY</label>
+              <select
+                v-model="form.seller_personality"
+                class="w-full bg-surface-container-low border border-outline-variant text-on-surface px-md py-sm rounded-DEFAULT focus:border-primary-container focus:outline-none"
+              >
+                <option value="balanced">Balanced</option>
+                <option value="aggressive">Aggressive</option>
+                <option value="conservative">Conservative</option>
+              </select>
+            </div>
 
               <div v-if="error" class="text-error font-code-sm">{{ error }}</div>
 
