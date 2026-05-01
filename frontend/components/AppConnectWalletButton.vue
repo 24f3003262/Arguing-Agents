@@ -41,9 +41,10 @@ function handleClick() {
 
   console.log("Available Connectors:", connectors.value);
 
-  const connector = connectors.value[0];
+  const connector = connectors?.value?.[0];
   if (!connector) {
-    console.error("No connector found. Is MetaMask installed?");
+    console.error("Wagmi Error: No connectors found. Check your plugins/wagmi.ts or extension.");
+    alert("Wallet extension not detected. Please ensure MetaMask is installed and refresh.");
     return;
   }
 
