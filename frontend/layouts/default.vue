@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen flex flex-col overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container bg-surface-dim">
-    <header class="flex justify-between items-center w-full px-8 py-4 sticky top-0 z-50 bg-neutral-950/90 backdrop-blur-md border-b border-cyan-500/20 shadow-[0_4px_20px_rgba(0,255,255,0.05)] relative after:content-[''] after:absolute after:inset-0 after:bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] after:bg-[length:100%_2px,3px_100%] after:pointer-events-none">
+  <div class="min-h-screen flex flex-col selection:bg-primary-container selection:text-on-primary-container bg-surface-dim">
+    <header class="flex sticky z-50 justify-between items-center w-full px-8 py-4 sticky top-0 z-50 bg-neutral-950/90 backdrop-blur-md border-b border-cyan-500/20 shadow-[0_4px_20px_rgba(0,255,255,0.05)] relative after:content-[''] after:absolute after:inset-0 after:bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] after:bg-[length:100%_2px,3px_100%] after:pointer-events-none">
       <div class="text-xl font-bold text-cyan-400 tracking-tighter italic z-10 font-['Space_Grotesk']">
         Arguing Agents?
       </div>

@@ -8,6 +8,10 @@ const props = withDefaults(defineProps<{
   variant: 'marketplace'
 })
 
+
+const isMounted = ref(false)
+onMounted(() => isMounted.value = true)
+
 const { address, isConnected, isConnecting } = useAccount()
 const { connect, connectors } = useConnect()
 const { disconnect } = useDisconnect()
@@ -27,19 +31,29 @@ const buttonClass = computed(() => {
 })
 
 function handleClick() {
+  console.log("Button clicked!");
+  
   if (isConnected.value) {
-    disconnect()
-    return
+    console.log("Disconnecting...");
+    disconnect();
+    return;
   }
 
-  const connector = connectors.value[0]
-  if (!connector) return
-  connect({ connector })
+  console.log("Available Connectors:", connectors.value);
+
+  const connector = connectors.value[0];
+  if (!connector) {
+    console.error("No connector found. Is MetaMask installed?");
+    return;
+  }
+
+  console.log("Attempting to connect to:", connector.name);
+  connect({ connector });
 }
 </script>
 
 <template>
-  <button :class="buttonClass" @click="handleClick" :disabled="isConnecting">
+  <button v-if="isMounted" :class="buttonClass" @click="handleClick" :disabled="isConnecting">
     {{ isConnecting ? 'Connecting...' : walletLabel }}
   </button>
 </template>
