@@ -20,6 +20,7 @@ export default defineNuxtConfig({
   vite: {
     optimizeDeps: {
       include: [
+        'eventemitter3',
         '@vue/devtools-core',
         '@vue/devtools-kit',
         'buffer',
