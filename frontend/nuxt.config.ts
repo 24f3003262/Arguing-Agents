@@ -27,5 +27,11 @@ export default defineNuxtConfig({
         'process'
       ]
     }
+  },
+  
+  runtimeConfig: {
+    public: {
+      contractAddress: '0xYourActualDeployedContractAddressHere'
+    }
   }
 })

@@ -37,7 +37,13 @@ interface NegotiationRequest {
   seller_personality: 'balanced' | 'aggressive' | 'conservative'
 }
 const { address, isConnected } = useAccount()
-const { writeContract, data: hash, isPending, error: contractError } = useWriteContract()
+const { 
+  writeContract, 
+  data: hash, 
+  isPending: isContractLoading, // Renamed for clarity
+  isSuccess: isSettled, 
+  error: contractError 
+} = useWriteContract()
 const isLoading = ref(false)
 const negotiationData = ref<NegotiationResponse | null>(null)
 const error = ref('')
@@ -147,22 +153,36 @@ async function startNegotiation() {
   }
 }
 async function finalizeOnChain() {
-  if (!negotiationData.value?.agreed_price || !isConnected.value) {
-    console.error("Negotiation not complete or wallet not connected")
-    return
+  console.log("Finalize Button Clicked");
+  console.log("Connection Status:", isConnected.value);
+  console.log("Contract Address:", contractAddress);
+
+  if (!negotiationData.value?.agreed_price || !address.value || !contractAddress) {
+    console.error("Missing data:", { 
+      price: negotiationData.value?.agreed_price, 
+      wallet: address.value, 
+      contract: contractAddress 
+    });
+    return;
   }
 
-  writeContract({
-    address: contractAddress as `0x${string}`,
-    abi: ARGUING_ABI,
-    functionName: 'createDeal',
-    args: [
-      address.value!, // The user's wallet address (Buyer)
-      '0x3F00000000000000000000000000000000000000', // Agent's address (Placeholder)
-      parseEther(negotiationData.value.agreed_price.toString()), // ETH -> Wei
-      negotiationData.value.item
-    ]
-  })
+  try {
+    writeContract({
+      // Explicitly cast to ensure Wagmi accepts the hex string
+      address: contractAddress as `0x${string}`,
+      abi: ARGUING_ABI,
+      functionName: 'createDeal',
+      args: [
+        address.value as `0x${string}`, 
+        '0x3F00000000000000000000000000000000000000' as `0x${string}`, 
+        parseEther(negotiationData.value.agreed_price.toString()), 
+        negotiationData.value.item
+      ]
+    })
+  } catch (err) {
+    // This should catch the "jerk" cause
+    console.error("Caught error during writeContract call:", err);
+  }
 }
 function resetNegotiation() {
   negotiationData.value = null
@@ -174,6 +194,8 @@ function resetNegotiation() {
     buyer_personality: 'balanced',
     seller_personality: 'balanced'
   }
+
+  error.value='';
 }
 </script>
 
@@ -331,17 +353,25 @@ function resetNegotiation() {
               </div>
               <div class="flex gap-md mt-auto pt-lg border-t border-surface-variant">
                 <button @click="finalizeOnChain"
-                  :disabled="isPending || !hasAgreement"
+                  :disabled="isContractLoading || !hasAgreement || isSettled"
                   class="flex-1 bg-primary-container text-on-primary-container chromatic-border-hover font-label-caps text-label-caps py-md px-lg rounded-DEFAULT uppercase tracking-widest border border-transparent hover:bg-transparent hover:text-primary-container hover:border-primary-container transition-all duration-300 chromatic-border-hover flex items-center justify-center gap-sm">
-                  <span v-if="isPending" class="material-symbols-outlined text-[16px] animate-spin">sync</span>
-                  <span v-else class="material-symbols-outlined text-[16px]">draw</span>
-                  {{ isPending ? 'Processing...' : 'Finalize Contract' }}
+                  <span v-if="isContractLoading" class="material-symbols-outlined text-[16px] animate-spin">sync</span>
+                  <span v-else class="material-symbols-outlined text-[16px]">{{ isSettled ? 'check_circle' : 'draw' }}</span>
+                  {{ isContractLoading ? 'Signing...' : isSettled ? 'Settled on Chain' : 'Finalize Contract' }}
                 </button>
-                <button @click="resetNegotiation" class="flex-1 bg-surface-container text-on-surface font-label-caps text-label-caps py-md px-lg rounded-DEFAULT uppercase tracking-widest border border-outline-variant hover:border-secondary-container hover:text-secondary-container transition-all duration-300 chromatic-hover flex items-center justify-center gap-sm">
-                  <span class="material-symbols-outlined text-[16px]">restart_alt</span>
+
+
+                <button @click="resetNegotiation" class="flex-1 bg-primary-container text-on-primary-container chromatic-border-hover font-label-caps text-label-caps py-md px-lg rounded-DEFAULT uppercase tracking-widest border border-transparent hover:bg-transparent hover:text-primary-container hover:border-primary-container transition-all duration-300 chromatic-border-hover flex items-center justify-center gap-sm">
                   New Negotiation
                 </button>
               </div>
+            </div>
+
+
+            <div v-if="hash" class="mt-md text-center">
+              <a :href="`https://sepolia.etherscan.io/tx/${hash}`" target="_blank" class="text-cyan-400 font-code-sm underline underline-offset-4 decoration-cyan-400/30 hover:text-cyan-300">
+                View Transaction on Etherscan
+              </a>
             </div>
 
             <div class="bg-surface-container border border-outline-variant p-lg flex flex-col gap-lg relative z-10">
