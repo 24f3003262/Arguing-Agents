@@ -1,108 +1,112 @@
 <script setup lang="ts">
-// Logic for handling marketplace interactions can go here
+import { ref, onMounted } from 'vue'
+
+interface MarketItem {
+  id: number
+  item: string
+  starting_price: number
+  description?: string
+  seller_wallet: string
+  status: string
+}
+
+const items = ref<MarketItem[]>([])
+const isLoading = ref(true)
+
+async function fetchItems() {
+  try {
+    const res = await fetch('http://localhost:3001/items')
+    const data = await res.json()
+    
+    // Filter out any broken items or ensure they have default values
+    items.value = data.map((item: any) => ({
+      ...item,
+      seller_wallet: item.seller_wallet || '', // Ensure it's at least an empty string
+      status: item.status || 'AVAILABLE'
+    }))
+  } catch (e) {
+    console.error("Failed to sync with market ledger:", e)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchItems()
+})
 </script>
 
 <template>
   <div class="relative z-20">
     <header class="mb-xl border-b border-surface-variant pb-md flex justify-between items-end">
       <div>
-        <h1 class="font-h1 text-on-surface mb-unit">Asset Exchange</h1>
-        <p class="font-code-sm text-on-surface-variant">Procure resources for autonomous agent execution. Live market rates applied.</p>
+        <h1 class="font-h1 text-on-surface mb-unit italic tracking-tighter">Asset Exchange</h1>
+        <p class="font-code-sm text-on-surface-variant uppercase tracking-widest">
+          Procure resources for autonomous agent execution.
+        </p>
       </div>
-      <div class="flex items-center gap-md font-code-sm text-primary-container">
-        <span class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></span>
-        MARKET: ONLINE
-      </div>
+
+      <!-- GLITCHY CREATE BUTTON -->
+      <NuxtLink 
+        to="/create_items"
+        class="font-label-caps text-label-caps px-xl py-md border border-primary-container text-primary-container negotiation-chromatic-btn transition-all flex items-center gap-sm group"
+      >
+        <span class="material-symbols-outlined text-sm group-hover:rotate-90 transition-transform">add</span>
+        Initialize_New_Asset
+      </NuxtLink>
     </header>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-gutter items-stretch">
-      
-      <article class="bg-surface-container-low border border-outline-variant p-lg flex flex-col h-full group relative overflow-hidden cyber-card-base">
-        <div class="absolute top-0 right-0 p-unit bg-primary-container/10 border-b border-l border-outline-variant text-primary-container font-label-caps text-[10px]">TIER 1</div>
+    <!-- LOADING STATE -->
+    <div v-if="isLoading" class="flex flex-col items-center justify-center py-20 text-primary-container animate-pulse">
+      <span class="material-symbols-outlined text-6xl animate-spin">sync</span>
+      <p class="font-code-sm mt-md">SYNCHRONIZING_WITH_LEDGER...</p>
+    </div>
+
+    <!-- DYNAMIC GRID -->
+    <div v-else class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-gutter items-stretch">
+      <article 
+        v-for="item in items" 
+        :key="item.id"
+        class="bg-surface-container-low border border-outline-variant p-lg flex flex-col h-full group relative overflow-hidden cyber-card-base"
+      >
+        <div class="absolute top-0 right-0 p-unit bg-primary-container/10 border-b border-l border-outline-variant text-primary-container font-label-caps text-[10px]">
+          {{ item.status }}
+        </div>
+        
         <div class="mb-lg">
-          <span class="material-symbols-outlined text-4xl text-primary-fixed-dim mb-sm block">memory</span>
-          <h3 class="font-h3 text-on-surface">Neural Net Processors</h3>
-          <p class="font-code-sm text-on-surface-variant mt-xs h-12 line-clamp-2">High-throughput tensor cores for deep learning inference.</p>
+          <span class="material-symbols-outlined text-4xl text-primary-fixed-dim mb-sm block">
+            {{ item.status === 'SOLD' ? 'lock' : 'deployed_code' }}
+          </span>
+          <h3 class="font-h3 text-on-surface uppercase">{{ item.item || item.name || 'Unknown Asset' }}</h3>
+          <p class="font-code-sm text-on-surface-variant mt-xs h-12 line-clamp-2">
+            Origin: {{ item.seller_wallet?.slice(0, 10) || '0x0000...0000' }}
+          </p>
         </div>
         
         <div class="flex-1 grid grid-cols-2 gap-sm mb-lg font-code-sm border-t border-surface-variant pt-sm">
-          <div>
-            <div class="text-outline">Compute</div>
-            <div class="text-on-surface font-bold">12.4 TFLOPS</div>
-          </div>
-          <div>
-            <div class="text-outline">Latency</div>
-            <div class="text-on-surface font-bold">~4ms</div>
-          </div>
           <div class="col-span-2">
-            <div class="text-outline">Availability</div>
-            <div class="text-primary-container">99.98%</div>
+            <div class="text-outline uppercase">Registry_ID</div>
+            <div class="text-on-surface font-bold text-[10px]">{{ item.id }}</div>
           </div>
         </div>
 
         <div class="mt-auto flex items-center justify-between pt-md border-t border-surface-variant">
-          <div class="font-h2 text-tertiary">2.5 <span class="font-body-md text-outline">ETH</span></div>
-          <MarketplaceNegotiateLink variant="primary" class="negotiation-chromatic-btn glow-cyan" />
+          <div class="font-h2 text-on-surface">
+            {{ item.starting_price ?? item.price ?? '0.00' }} 
+            <span class="font-body-md text-outline">ETH</span>
+          </div>
+          
+          <!-- Route to negotiation with the specific item ID -->
+          <NuxtLink 
+            v-if="item.status !== 'SOLD'"
+            :to="{ path: '/negotiation', query: { id: item.id } }"
+            class="negotiation-chromatic-btn px-lg py-sm font-label-caps text-label-caps text-cyan-400"
+>
+            Negotiate
+          </NuxtLink>
+          <div v-else class="text-outline font-label-caps">COMPLETED</div>
         </div>
       </article>
-
-      <article class="bg-surface-container-low border border-outline-variant p-lg flex flex-col h-full group relative overflow-hidden cyber-card-base">
-        <div class="absolute top-0 right-0 p-unit bg-primary-container/10 border-b border-l border-outline-variant text-primary-container font-label-caps text-[10px]">HIGH DEMAND</div>
-        <div class="mb-lg">
-          <span class="material-symbols-outlined text-4xl text-primary-fixed-dim mb-sm block">route</span>
-          <h3 class="font-h3 text-on-surface">Logistics Arrays</h3>
-          <p class="font-code-sm text-on-surface-variant mt-xs h-12 line-clamp-2">Optimized routing algorithms for supply chain management.</p>
-        </div>
-        
-        <div class="flex-1 grid grid-cols-2 gap-sm mb-lg font-code-sm border-t border-surface-variant pt-sm">
-          <div>
-            <div class="text-outline">Nodes</div>
-            <div class="text-on-surface font-bold">10,000+</div>
-          </div>
-          <div>
-            <div class="text-outline">Update Freq</div>
-            <div class="text-on-surface font-bold">Real-time</div>
-          </div>
-          <div class="col-span-2">
-            <div class="text-outline">Protocol</div>
-            <div class="text-on-surface">Dijkstra+</div>
-          </div>
-        </div>
-
-        <div class="mt-auto flex items-center justify-between pt-md border-t border-surface-variant">
-          <div class="font-h2 text-tertiary">1,200 <span class="font-body-md text-outline">USDC</span></div>
-          <MarketplaceNegotiateLink variant="primary" class="negotiation-chromatic-btn glow-cyan" />
-        </div>
-      </article>
-
-      <article class="bg-surface-container-low border border-outline-variant p-lg flex flex-col h-full group relative overflow-hidden cyber-card-base">
-        <div class="mb-lg">
-          <span class="material-symbols-outlined text-4xl text-primary-fixed-dim mb-sm block">cyclone</span>
-          <h3 class="font-h3 text-on-surface">Compute Cycles</h3>
-          <p class="font-code-sm text-on-surface-variant mt-xs h-12 line-clamp-2">Raw distributed processing power for general tasks.</p>
-        </div>
-
-        <div class="flex-1 grid grid-cols-2 gap-sm mb-lg font-code-sm border-t border-surface-variant pt-sm">
-          <div>
-            <div class="text-outline">Allocation</div>
-            <div class="text-on-surface font-bold">Dynamic</div>
-          </div>
-          <div>
-            <div class="text-outline">Base Cost</div>
-            <div class="text-on-surface font-bold">Spot</div>
-          </div>
-          <div class="col-span-2">
-            <div class="text-outline">Cluster Size</div>
-            <div class="text-on-surface">Scalable (1 - 100x)</div>
-          </div>
-        </div>
-
-        <div class="mt-auto flex items-center justify-between pt-md border-t border-surface-variant">
-          <div class="font-h2 text-tertiary">0.05 <span class="font-body-md text-outline">ETH/hr</span></div>
-          <MarketplaceNegotiateLink variant="primary" class="negotiation-chromatic-btn glow-cyan" />
-        </div>
-      </article>
-
     </div>
   </div>
 </template>

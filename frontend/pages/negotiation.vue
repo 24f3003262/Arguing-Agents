@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue' // Add onMounted
+import { useRoute } from 'vue-router' // Add useRoute
 import { ARGUING_ABI } from '~/constants/abi'
 import { useAccount, useWriteContract } from '@wagmi/vue'
 import { parseEther } from 'viem'
@@ -36,19 +37,22 @@ interface NegotiationRequest {
   buyer_personality: 'balanced' | 'aggressive' | 'conservative'
   seller_personality: 'balanced' | 'aggressive' | 'conservative'
 }
+const route = useRoute()
 const { address, isConnected } = useAccount()
 const { 
   writeContract, 
   data: hash, 
-  isPending: isContractLoading, // Renamed for clarity
+  isPending: isContractLoading, 
   isSuccess: isSettled, 
   error: contractError 
 } = useWriteContract()
+
 const isLoading = ref(false)
 const negotiationData = ref<NegotiationResponse | null>(null)
 const error = ref('')
 const config = useRuntimeConfig()
 const contractAddress = config.public.contractAddress
+const sellerWallet = ref('') // Store the seller's wallet from the backend
 
 
 
@@ -56,9 +60,38 @@ const form = ref<NegotiationRequest>({
   item: '',
   starting_price: 0,
   buyer_max_price: 0,
-  seller_min_price: 0,
+  seller_min_price: 0, // This will be populated from the backend but hidden in UI
   buyer_personality: 'balanced',
   seller_personality: 'balanced'
+})
+
+
+onMounted(async () => {
+  const itemId = route.query.id
+  if (itemId) {
+    try {
+      const response = await fetch(`http://localhost:3001/items/${itemId}`)
+      if (response.ok) {
+        const itemData = await response.json()
+        
+        // Use fallbacks for every key to ensure the form isn't empty
+        form.value.item = itemData.item || itemData.name || 'Unknown Asset'
+        
+        // Map 'price' from backend to 'starting_price' for the form
+        form.value.starting_price = itemData.starting_price || itemData.price || 0
+        
+        // Map 'min_price' if it exists, otherwise default to 0
+        form.value.seller_min_price = itemData.seller_min_price || itemData.min_price || 0
+        
+        form.value.seller_personality = itemData.seller_personality || 'balanced'
+        sellerWallet.value = itemData.seller_wallet || itemData.wallet || ''
+        
+        console.log("Successfully loaded item context:", form.value.item)
+      }
+    } catch (e) {
+      console.error("Failed to load item context", e)
+    }
+  }
 })
 
 const hasAgreement = computed(() => negotiationData.value?.status === 'agreed')
@@ -118,13 +151,10 @@ const sideNavItems = [
 ]
 
 async function startNegotiation() {
-  if (
-    !form.value.item ||
-    form.value.starting_price <= 0 ||
-    form.value.buyer_max_price <= 0 ||
-    form.value.seller_min_price <= 0
-  ) {
-    error.value = 'Please fill in all fields'
+
+  console.log("Current Form State:", form.value)
+  if (!form.value.item || form.value.starting_price <= 0 || form.value.buyer_max_price <= 0) {
+    error.value = 'Please define your starting offer and maximum budget'
     return
   }
 
@@ -134,16 +164,11 @@ async function startNegotiation() {
   try {
     const response = await fetch('http://localhost:3001/negotiate', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form.value)
     })
 
-    if (!response.ok) {
-      throw new Error('Failed to start negotiation')
-    }
-
+    if (!response.ok) throw new Error('Failed to start negotiation')
     negotiationData.value = await response.json()
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'An error occurred'
@@ -152,38 +177,27 @@ async function startNegotiation() {
     isLoading.value = false
   }
 }
-async function finalizeOnChain() {
-  console.log("Finalize Button Clicked");
-  console.log("Connection Status:", isConnected.value);
-  console.log("Contract Address:", contractAddress);
 
-  if (!negotiationData.value?.agreed_price || !address.value || !contractAddress) {
-    console.error("Missing data:", { 
-      price: negotiationData.value?.agreed_price, 
-      wallet: address.value, 
-      contract: contractAddress 
-    });
-    return;
-  }
+async function finalizeOnChain() {
+  if (!negotiationData.value?.agreed_price || !address.value || !contractAddress) return
 
   try {
     writeContract({
-      // Explicitly cast to ensure Wagmi accepts the hex string
       address: contractAddress as `0x${string}`,
       abi: ARGUING_ABI,
       functionName: 'createDeal',
       args: [
         address.value as `0x${string}`, 
-        '0x3F00000000000000000000000000000000000000' as `0x${string}`, 
+        (sellerWallet.value || '0x3F00000000000000000000000000000000000000') as `0x${string}`, 
         parseEther(negotiationData.value.agreed_price.toString()), 
         negotiationData.value.item
       ]
     })
   } catch (err) {
-    // This should catch the "jerk" cause
-    console.error("Caught error during writeContract call:", err);
+    console.error("Contract Execution Error:", err)
   }
 }
+
 function resetNegotiation() {
   negotiationData.value = null
   form.value = {
@@ -196,6 +210,7 @@ function resetNegotiation() {
   }
 
   error.value='';
+  navigateTo('/marketplace')
 }
 </script>
 
@@ -215,115 +230,56 @@ function resetNegotiation() {
       </div>
     </header> -->
 
-    <div class="flex flex-1 relative w-full">
-      <!-- <aside class="fixed left-0 top-[73px] bottom-0 flex flex-col pt-6 bg-neutral-950 h-full w-64 border-r border-cyan-900/30 hidden md:flex before:content-[''] before:absolute before:inset-0 before:bg-[linear-gradient(rgba(18,19,21,0)_50%,rgba(0,255,255,0.02)_50%)] before:bg-[length:100%_4px] z-40">
-        <div class="px-6 mb-8 relative z-10">
-          <h2 class="text-cyan-500 font-black font-['Space_Grotesk'] text-lg tracking-widest">SYSTEM_CTRL</h2>
-          <p class="font-['Space_Grotesk'] text-xs font-medium text-neutral-500 mt-1">V.2.0.4-STABLE</p>
-        </div>
-        <nav class="flex flex-col w-full relative z-10">
-          <a
-            v-for="item in sideNavItems"
-            :key="item.label"
-            :href="item.href"
-            class="font-['Space_Grotesk'] text-xs font-medium flex items-center chromatic-hover gap-3 px-4 py-3 hover:bg-neutral-900 hover:text-cyan-200 transition-all"
-            :class="item.active
-              ? 'bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400'
-              : 'text-neutral-600'"
-          >
-            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">{{ item.icon }}</span>
-            {{ item.label }}
-          </a>
-        </nav>
-      </aside> -->
+   <div class="flex flex-1 relative w-full">
+    <div v-if="!negotiationData" class="max-w-2xl mx-auto pt-lg">
+      <div class="bg-surface-container border border-outline-variant p-lg">
+        <h2 class="font-h2 text-h2 text-on-surface mb-lg uppercase tracking-tighter">Initialize Buyer Agent</h2>
 
-      <!-- <main :class="{ 'animate-pulse opacity-90': isLoading }" class="flex-1 md:ml-64 p-gutter lg:p-margin relative scanline-bg bg-surface-dim min-h-full"> -->
-        <div v-if="!negotiationData" class="max-w-2xl mx-auto pt-lg">
-          <div class="bg-surface-container border border-outline-variant p-lg">
-            <h2 class="font-h2 text-h2 text-on-surface mb-lg">Start New Negotiation</h2>
-
-            <form @submit.prevent="startNegotiation" class="flex flex-col gap-lg">
-              <div>
-                <label class="font-label-caps text-label-caps text-on-surface-variant block mb-sm">ITEM NAME</label>
-                <input
-                  v-model="form.item"
-                  type="text"
-                  placeholder="e.g., Bored Ape Yacht Club #4211"
-                  class="w-full bg-surface-container-low border border-outline-variant text-on-surface px-md py-sm rounded-DEFAULT focus:border-primary-container focus:outline-none"
-                />
-              </div>
-
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-md">
-                <div>
-                  <label class="font-label-caps text-label-caps text-on-surface-variant block mb-sm">START PRICE</label>
-                  <input
-                  v-model.number="form.starting_price"
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                    class="w-full bg-surface-container-low border border-outline-variant text-on-surface px-md py-sm rounded-DEFAULT focus:border-primary-container focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label class="font-label-caps text-label-caps text-on-surface-variant block mb-sm">MIN PRICE</label>
-                  <input
-                  v-model.number="form.seller_min_price"
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                    class="w-full bg-surface-container-low border border-outline-variant text-on-surface px-md py-sm rounded-DEFAULT focus:border-primary-container focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label class="font-label-caps text-label-caps text-on-surface-variant block mb-sm">MAX PRICE</label>
-                  <input
-                  v-model.number="form.buyer_max_price"
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                  class="w-full bg-surface-container-low border border-outline-variant text-on-surface px-md py-sm rounded-DEFAULT focus:border-primary-container focus:outline-none"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label class="font-label-caps text-label-caps text-on-surface-variant block mb-sm">BUYER PERSONALITY</label>
-              <select
-                v-model="form.buyer_personality"
-                class="w-full bg-surface-container-low border border-outline-variant text-on-surface px-md py-sm rounded-DEFAULT focus:border-primary-container focus:outline-none"
-              >
-                <option value="balanced">Balanced</option>
-                <option value="aggressive">Aggressive</option>
-                <option value="conservative">Conservative</option>
-              </select>
-            </div>
-
-            <div>
-              <label class="font-label-caps text-label-caps text-on-surface-variant block mb-sm">SELLER PERSONALITY</label>
-              <select
-                v-model="form.seller_personality"
-                class="w-full bg-surface-container-low border border-outline-variant text-on-surface px-md py-sm rounded-DEFAULT focus:border-primary-container focus:outline-none"
-              >
-                <option value="balanced">Balanced</option>
-                <option value="aggressive">Aggressive</option>
-                <option value="conservative">Conservative</option>
-              </select>
-            </div>
-
-              <div v-if="error" class="text-error font-code-sm">{{ error }}</div>
-
-              <button
-                type="submit"
-                :disabled="isLoading"
-                class="bg-primary-container text-on-primary-container font-label-caps text-label-caps py-md px-lg rounded-DEFAULT chromatic-border-hover uppercase tracking-widest border border-transparent hover:bg-transparent hover:text-primary-container hover:border-primary-container transition-all duration-300 flex items-center justify-center gap-sm disabled:opacity-50"
-              >
-                <span v-if="isLoading" class="material-symbols-outlined text-[16px] animate-spin">sync</span>
-                <span v-else class="material-symbols-outlined text-[16px]">play_arrow</span>
-                {{ isLoading ? 'Processing...' : 'Start Negotiation' }}
-              </button>
-            </form>
+        <form @submit.prevent="startNegotiation" class="flex flex-col gap-lg">
+          <!-- Item Name (Read Only) -->
+          <div>
+            <label class="font-label-caps text-label-caps text-on-surface-variant block mb-sm tracking-widest">Target Asset</label>
+            <input v-model="form.item" type="text" readonly
+              class="w-full bg-surface-container-low border border-outline-variant text-on-surface/50 px-md py-sm focus:outline-none opacity-70 cursor-not-allowed" />
           </div>
-        </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+            <!-- Starting Offer -->
+            <div>
+              <label class="font-label-caps text-label-caps text-on-surface-variant block mb-sm tracking-widest">Your Start Offer (ETH)</label>
+              <input v-model.number="form.starting_price" type="number" step="0.01"
+                class="w-full bg-surface-container-low border border-outline-variant text-on-surface px-md py-sm rounded-DEFAULT focus:border-primary-container focus:outline-none" />
+            </div>
+            <!-- Buyer Max -->
+            <div>
+              <label class="font-label-caps text-label-caps text-on-surface-variant block mb-sm tracking-widest">Max Budget (ETH)</label>
+              <input v-model.number="form.buyer_max_price" type="number" step="0.01"
+                class="w-full bg-surface-container-low border border-outline-variant text-on-surface px-md py-sm rounded-DEFAULT focus:border-primary-container focus:outline-none" />
+            </div>
+          </div>
+
+          <!-- Personality -->
+          <div>
+            <label class="font-label-caps text-label-caps text-on-surface-variant block mb-sm tracking-widest">Buyer Agent Personality</label>
+            <select v-model="form.buyer_personality"
+              class="w-full bg-surface-container-low border border-outline-variant text-on-surface px-md py-sm rounded-DEFAULT focus:border-primary-container focus:outline-none">
+              <option value="balanced">Balanced</option>
+              <option value="aggressive">Aggressive</option>
+              <option value="conservative">Conservative</option>
+            </select>
+          </div>
+
+          <div v-if="error" class="text-error font-code-sm uppercase animate-pulse">{{ error }}</div>
+
+          <button type="submit" :disabled="isLoading"
+            class="bg-primary-container text-on-primary-container font-label-caps text-label-caps py-md px-lg rounded-DEFAULT chromatic-border-hover uppercase tracking-[0.2em] border border-transparent hover:bg-transparent hover:text-primary-container hover:border-primary-container transition-all duration-300 flex items-center justify-center gap-sm disabled:opacity-50">
+            <span v-if="isLoading" class="material-symbols-outlined text-[16px] animate-spin">sync</span>
+            <span v-else class="material-symbols-outlined text-[16px]">psychology</span>
+            {{ isLoading ? 'Deploying Agent...' : 'Authorize Negotiation' }}
+          </button>
+        </form>
+      </div>
+    </div>
 
         <div v-else>
           <div class="mb-lg flex items-center justify-between relative z-10">
