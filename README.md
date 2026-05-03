@@ -1,7 +1,11 @@
+> Repository was initially created before the hackathon, but no actual major development was done until after the official start time (April 24). This repo reflects the actual work done during the hackathon, we had misremembered actual start date, but mostly Project Structure and base libraries were installed.
+
 # Arguing Agents: A Decentralized Negotiation Protocol
+
 Arguing Agents is a marketplace concept where the friction of human haggling is replaced by autonomous AI negotiation nodes. The system allows buyers and sellers to deploy specialized agents that interact within defined financial and behavioral boundaries, resolving deals through a logic-based "argument" that concludes with on-chain settlement.
 
 ## Core Mechanics
+
 The platform moves away from static pricing by allowing both parties to define a personality and a set of hidden constraints for their respective agents.
 
 - The Seller Agent: Established during asset registration, the seller provides a public starting price, a private minimum acceptable price, and a personality profile—such as Aggressive, Balanced, or Conservative—that dictates how stubbornly the agent defends its profit margins.
@@ -11,6 +15,7 @@ The platform moves away from static pricing by allowing both parties to define a
 - The Negotiation Loop: Once both agents are initialized, they engage in a multi-round exchange. The backend acts as a referee, processing each counter-offer and concession until the agents either find a mathematical overlap or reach a stalemate.
 
 ## Technical Implementation
+
 The project is built as a full-stack decentralized application, integrating high-level reasoning with blockchain execution.
 
 - Frontend: Developed using Nuxt 3 and Vue.js, the interface provides a terminal-style environment for monitoring the live negotiation history.
@@ -21,8 +26,8 @@ The project is built as a full-stack decentralized application, integrating high
 
 - AI Integration: The system leverages multiple models, including Gemini and GPT-5.0, to generate the reactive dialogue and logical decision-making required for the agents to defend their positions.
 
-
 ## Strategic Setup for Multi-round interaction
+
 To ensure the agents engage in a meaningful negotiation during a demonstration, the marketplace is configured with specific information asymmetry:
 
 1. Price Anchoring: The public starting price is typically set higher than the buyer's maximum budget, forcing the buyer to initiate the dialogue with a lower counter-offer.
