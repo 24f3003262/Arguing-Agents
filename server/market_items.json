@@ -1,0 +1,20 @@
+[
+    {
+        "id": 1,
+        "item": "Bored Ape #4211",
+        "starting_price": 0.5,
+        "seller_min_price": 0.4,
+        "seller_personality": "aggressive",
+        "seller_wallet": "0x2AfA...85DB",
+        "status": "available"
+    },
+    {
+        "id": 2,
+        "item": "YarnOfTruth",
+        "starting_price": 0.5,
+        "seller_min_price": 0.4,
+        "seller_personality": "balanced",
+        "seller_wallet": "0x2aeadb3e3cFCd4c4Ba918530d7E4E2CcBEFF65Db",
+        "status": "available"
+    }
+]
