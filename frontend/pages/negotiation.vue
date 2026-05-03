@@ -182,6 +182,9 @@ async function finalizeOnChain() {
   if (!negotiationData.value?.agreed_price || !address.value || !contractAddress) return
 
   try {
+    // Convert the agreed price to Wei once to use in both places
+    const priceInWei = parseEther(negotiationData.value.agreed_price.toString())
+
     writeContract({
       address: contractAddress as `0x${string}`,
       abi: ARGUING_ABI,
@@ -189,9 +192,12 @@ async function finalizeOnChain() {
       args: [
         address.value as `0x${string}`, 
         (sellerWallet.value || '0x3F00000000000000000000000000000000000000') as `0x${string}`, 
-        parseEther(negotiationData.value.agreed_price.toString()), 
+        priceInWei, // This is for the contract's internal record
         negotiationData.value.item
-      ]
+      ],
+      // THIS IS THE FIX:
+      // This tells MetaMask the actual amount of ETH to send with the transaction.
+      value: priceInWei 
     })
   } catch (err) {
     console.error("Contract Execution Error:", err)

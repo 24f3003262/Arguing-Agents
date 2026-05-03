@@ -16,5 +16,23 @@
         "seller_personality": "balanced",
         "seller_wallet": "0x2aeadb3e3cFCd4c4Ba918530d7E4E2CcBEFF65Db",
         "status": "available"
+    },
+    {
+        "id": 3,
+        "item": "Welp",
+        "starting_price": 0.06,
+        "seller_min_price": 0.04,
+        "seller_personality": "balanced",
+        "seller_wallet": null,
+        "status": "available"
+    },
+    {
+        "id": 4,
+        "item": "ReAl_DeAl_1",
+        "starting_price": 0.05,
+        "seller_min_price": 0.04,
+        "seller_personality": "balanced",
+        "seller_wallet": "0x9A380a483bF5F53A242Fc7A5a56a1F74A98511fe",
+        "status": "available"
     }
 ]
