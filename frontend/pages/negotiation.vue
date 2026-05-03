@@ -151,9 +151,8 @@ const sideNavItems = [
 ]
 
 async function startNegotiation() {
-
-  console.log("Current Form State:", form.value)
-  if (!form.value.item || form.value.starting_price <= 0 || form.value.buyer_max_price <= 0) {
+  // Validate that the buyer has provided their constraints
+  if (!form.value.item || form.value.buyer_max_price <= 0) {
     error.value = 'Please define your starting offer and maximum budget'
     return
   }
@@ -165,6 +164,8 @@ async function startNegotiation() {
     const response = await fetch('http://localhost:3001/negotiate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      // form.value now contains both the seller's DB-backed constraints 
+      // and the buyer's UI-entered constraints.
       body: JSON.stringify(form.value)
     })
 
@@ -177,7 +178,6 @@ async function startNegotiation() {
     isLoading.value = false
   }
 }
-
 async function finalizeOnChain() {
   if (!negotiationData.value?.agreed_price || !address.value || !contractAddress) return
 

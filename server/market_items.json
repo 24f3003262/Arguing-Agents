@@ -34,5 +34,14 @@
         "seller_personality": "balanced",
         "seller_wallet": "0x9A380a483bF5F53A242Fc7A5a56a1F74A98511fe",
         "status": "available"
+    },
+    {
+        "id": 5,
+        "item": "Totally_a_real_deal",
+        "starting_price": 0.08,
+        "seller_min_price": 0.05,
+        "seller_personality": "balanced",
+        "seller_wallet": "0xB271506edEBB6A4313703a7ffD8b5F4Fd70729bC",
+        "status": "available"
     }
 ]
