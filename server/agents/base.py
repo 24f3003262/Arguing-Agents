@@ -53,7 +53,7 @@ class Agent:
                 "Only accept if the deal is highly favorable or close to your desired profit, "
                 "or if further negotiation is unlikely to improve the outcome."
             )
-            direction_rule = direction_rule = "When countering, move gradually toward the buyer's last offer while still maintaining a profit advantage for yourself."
+            direction_rule = "When countering, move gradually toward the buyer's last offer while still maintaining a profit advantage for yourself."
             cancel_rule = "If no valid counter is possible above your min_price, use status='cancel'."
 
         personality_hint = PERSONALITY_HINTS.get(
@@ -77,10 +77,10 @@ Rules:
 - {direction_rule}
 - Avoid unrealistic jumps. Move strategically and gradually toward agreement.
 - Personality step behavior:
-    - conservative: small cautious concessions.
-    - aggressive: larger concessions, faster convergence.
-    - balanced: moderate concessions.
-- Keep message short, natural, human-like (one sentence).
+    - conservative: very small concessions, prioritize best deal over speed.
+    - aggressive: larger concessions, prioritize closing quickly.
+    - balanced: moderate concessions balancing deal quality and speed.
+-  Keep message natural and human-like (1–2 short sentences), optionally including reasoning or justification.
 - Reason internally only. Output JSON only, with no markdown, code fences, or extra text.
 - Respond ONLY with valid JSON matching exactly this schema:
 {{
