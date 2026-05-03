@@ -33,6 +33,7 @@ interface NegotiationRequest {
   item: string
   starting_price: number
   buyer_max_price: number
+  buyer_start_offer: number
   seller_min_price: number
   buyer_personality: 'balanced' | 'aggressive' | 'conservative'
   seller_personality: 'balanced' | 'aggressive' | 'conservative'
@@ -60,6 +61,7 @@ const form = ref<NegotiationRequest>({
   item: '',
   starting_price: 0,
   buyer_max_price: 0,
+  buyer_start_offer: 0,
   seller_min_price: 0, // This will be populated from the backend but hidden in UI
   buyer_personality: 'balanced',
   seller_personality: 'balanced'
@@ -151,9 +153,9 @@ const sideNavItems = [
 ]
 
 async function startNegotiation() {
-  // Validate that the buyer has provided their constraints
-  if (!form.value.item || form.value.buyer_max_price <= 0) {
-    error.value = 'Please define your starting offer and maximum budget'
+  // 1. Updated validation to include the buyer's starting bid
+  if (!form.value.item || form.value.buyer_max_price <= 0 || !form.value.buyer_start_offer) {
+    error.value = 'Please define your opening bid and maximum budget'
     return
   }
 
@@ -164,9 +166,13 @@ async function startNegotiation() {
     const response = await fetch('http://localhost:3001/negotiate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      // form.value now contains both the seller's DB-backed constraints 
-      // and the buyer's UI-entered constraints.
-      body: JSON.stringify(form.value)
+      // 2. Explicitly override the 'last_offer' and 'turn' in the body
+      body: JSON.stringify({
+        ...form.value,
+        last_offer: form.value.buyer_start_offer, // Forces the bid to be the buyer's 0.015
+        last_move_by: 'buyer',                   // Tells the backend the buyer just spoke
+        current_round: 1                         // Initializes the round counter
+      })
     })
 
     if (!response.ok) throw new Error('Failed to start negotiation')
@@ -253,7 +259,7 @@ function resetNegotiation() {
             <!-- Starting Offer -->
             <div>
               <label class="font-label-caps text-label-caps text-on-surface-variant block mb-sm tracking-widest">Your Start Offer (ETH)</label>
-              <input v-model.number="form.starting_price" type="number" step="0.01"
+              <input v-model.number="form.buyer_start_offer" type="number" step="0.01"
                 class="w-full bg-surface-container-low border border-outline-variant text-on-surface px-md py-sm rounded-DEFAULT focus:border-primary-container focus:outline-none" />
             </div>
             <!-- Buyer Max -->
